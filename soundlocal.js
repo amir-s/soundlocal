@@ -41,11 +41,11 @@ var goo = function (arc, arr, cb, errcb) {
 		console.log("writing for " + e.file);
 		console.log("with ");
 		console.log(e.data);
+		e.data.description = e.data.description.split("\r\n").join(" ").substr(0, 32);
 		console.log(e.options);
-		
 
 		ffmetadata.write(e.file, e.data, e.options, function(err) {
-			if (err) return errcb(err);
+			// if (err) return errcb(err);
 			files.push(e.file);
 			next();
 		});
@@ -107,7 +107,11 @@ var download = function (url, lister, downloaded, startzip, stat, cb, errcb) {
 					if (arr.length == N) {
 						startzip();
 						clearInterval(interval);
-						goo(arc, arr, cb, errcb);
+						console.log("Waiting for Goo");
+						setTimeout(function () {
+							console.log("Running Goo");
+							goo(arc, arr, cb, errcb);
+						}, 1000);
 					}
 				}
 				if (e.artwork_url) {
