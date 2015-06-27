@@ -39,6 +39,11 @@ var goo = function (arc, arr, cb, errcb) {
 	var files = [];
 	arr.forEachAsync(function (e, next) {
 		console.log("writing for " + e.file);
+		console.log("with ");
+		console.log(e.data);
+		console.log(e.options);
+		
+
 		ffmetadata.write(e.file, e.data, e.options, function(err) {
 			if (err) return errcb(err);
 			files.push(e.file);
