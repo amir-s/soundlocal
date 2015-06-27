@@ -72,6 +72,8 @@ io.on('connection', function (socket) {
 			socket.emit('startzip');
 		}, function (stat) {
 			socket.emit('stat', stat);
+		}, function (attached) {
+			socket.emit('attached', attached);
 		}, function (name) {
 			socket.emit('fin', name+'.zip');
 		}, function () {

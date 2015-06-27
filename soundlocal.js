@@ -34,19 +34,20 @@ var getJson = function (url, cb) {
 	});
 }
 var cid = '2412b70da476791567d496f0f3c26b88';
-var goo = function (arc, arr, cb, errcb) {
+var goo = function (arc, arr, attached, cb, errcb) {
 	console.log("Here");
 	var files = [];
 	arr.forEachAsync(function (e, next) {
 		console.log("writing for " + e.file);
 		console.log("with ");
 		console.log(e.data);
-		e.data.description = e.data.description.split("\r\n").join(" ").substr(0, 32);
+		// e.data.description = e.data.description.split("\r\n").join(" ").substr(0, 32);
 		console.log(e.options);
 
 		ffmetadata.write(e.file, e.data, e.options, function(err) {
 			// if (err) return errcb(err);
 			files.push(e.file);
+			attached(e.permalink);
 			next();
 		});
 	}, function () {
@@ -63,7 +64,7 @@ var goo = function (arc, arr, cb, errcb) {
 		});
 	})
 }
-var download = function (url, lister, downloaded, startzip, stat, cb, errcb) {
+var download = function (url, lister, downloaded, startzip, stat, attached, cb, errcb) {
 	var files = [];
 	var dlMap = {};
 	var r = 'http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=' + cid;
@@ -102,7 +103,8 @@ var download = function (url, lister, downloaded, startzip, stat, cb, errcb) {
 					arr.push({
 						file: f,
 						data: data,
-						options: options
+						options: options,
+						permalink: e.permalink
 					});
 					if (arr.length == N) {
 						startzip();
@@ -110,7 +112,7 @@ var download = function (url, lister, downloaded, startzip, stat, cb, errcb) {
 						console.log("Waiting for Goo");
 						setTimeout(function () {
 							console.log("Running Goo");
-							goo(arc, arr, cb, errcb);
+							goo(arc, arr, attached, cb, errcb);
 						}, 1000);
 					}
 				}

@@ -60,14 +60,14 @@
 		</script>
          <script type="text/javascript">
          $(function () {
-
+         	var N = 0;
 		  	var socket = io();
          	$("#submit").click(function (e) {
          		e.preventDefault();
          		socket.emit('url', $("#url").val());
  				$("#spl").animate({'height': '100%'});
  				$("form").slideUp();
- 				$(".splash-subhead").html('<i class="fa fa-spinner fa-pulse"></i> Please wait!');
+ 				$(".splash-subhead").html('<i class="fa fa-spinner fa-pulse"></i> <span id="spin-text">Please wait!</span>');
 
          		socket.on('list', function (data) {
      				var ind = 0;
@@ -80,17 +80,21 @@
      							</tr>';
      					$(".tbl").find("tbody").append(i);
      				});
+     				N = data.length;
          		});
-
+         		var dld = 0;
          		socket.on('downloaded', function (d) {
          			$("#item_"+d).find('.status').html('<i class="fa fa-check"></i> Downloaded!<div class="prog" style="width: 119%;"></div></td>');
+         			dld++;
+     				$("#spin-text").html('Downloading ... ' + dld + "/" + N);
+
          		});
 
          		socket.on('startzip', function () {
  					$(".splash-subhead").slideUp(function () {
- 						$(this).html('<i class="fa fa-spinner fa-pulse"></i> Attaching ID3 Tags and zipping!').slideDown();
+ 						$(this).html('<i class="fa fa-spinner fa-pulse"></i> <span id="spin-text">Attaching ID3 Tags!</span>').slideDown();
  					});
-         		})
+         		});
 
          		socket.on('fin', function (data) {
          			$(".splash-subhead").slideUp(function () {
@@ -105,6 +109,12 @@
          				$("#item_" + m).find(".prog").css({'width': perc+'%'});
          			}
          		})
+         		var atts = 0;
+         		socket.on('attached', function (att) {
+         			atts++;
+         			$("#item_" + m).find(".prog").css({'color': 'green'});
+         			$("#span-text").html('Attaching ID3 Tags! ' + atts + "/"+N);
+         		});
 
          		socket.on('err', function () {
          			$(".splash-subhead").html("Something went wrong!!");
