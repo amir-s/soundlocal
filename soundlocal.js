@@ -1,8 +1,29 @@
 var request = require('request');
-var eyed3 = require('eyed3');
 var fs = require('fs');
 var ffmetadata = require('ffmetadata');
 var nodejszip = require('nodejs-zip');
+
+Array.prototype.forEachAsync = function (cb, end) {
+	var _this = this;
+	setTimeout(function () {
+		var index = 0;
+		function next() {
+			index++;
+			if (index >= _this.length) {
+				if (end) end();
+				return;
+			}
+			cb(_this[index], next);
+		}
+		if (_this.length == 0) {
+			if (end) end();
+		}else {
+			cb(_this[0], next);
+		}
+	}, 0);
+}
+
+
 
 var getJson = function (url, cb) {
 	request(url, function (error, response, body) {
@@ -13,11 +34,36 @@ var getJson = function (url, cb) {
 	});
 }
 var cid = '2412b70da476791567d496f0f3c26b88';
+var goo = function (arc, arr, cb) {
+	var files = [];
+	console.log("GOO");
+	arr.forEachAsync(function (e, next) {
+		console.log(e.file);
+		ffmetadata.write(e.file, e.data, e.options, function(err) {
+			if (err) throw err;
+			files.push(e.file);
+			next();
+		});
+	}, function () {
+		var file = './public/' + arc + '.zip',
+			arguments = ['-j'],
+			fileList = files;
 
+		var zip = new nodejszip();
+
+		zip.compress(file, fileList, arguments, function(err) {
+			if (err) {
+				throw err;
+			}
+			cb(arc);
+		});
+	})
+}
 var download = function (url, cb) {
 	var files = [];
 	var r = 'http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=' + cid;
 	getJson(r, function (err, data) {
+		var arr = [];
 		if (err) throw err;
 		var arc = data.title;
 		var N = data.tracks.length;
@@ -28,36 +74,20 @@ var download = function (url, cb) {
 				var options = {};
 				var id3 = {};
 				var cc = function () {
-					
 					var data = {
 						description: e.description,
 						title: e.title,
 						genre: e.genre
 					};
-
-					ffmetadata.write(f, data, options, function(err) {
-						if (err) throw err;
-						console.log(f);
-						files.push(f);
-						if (files.length == N) {
-							
-						var file = './public/' + arc + '.zip',
-						        arguments = ['-j'],
-						        fileList = files;
-
-						    var zip = new nodejszip();
-
-						    zip.compress(file, fileList, arguments, function(err) {
-						        if (err) {
-						            throw err;
-						        }
-						        cb(arc);
-						    });
-
-
-						}
+					arr.push({
+						file: f,
+						data: data,
+						options: options
 					});
-
+					console.log("Done with " + f + " " + arr.length + " " + N)
+					if (arr.length == N) {
+						goo(arc, arr, cb);
+					}
 				}
 				if (e.artwork_url) {
 					var art = request(e.artwork_url);
@@ -71,8 +101,8 @@ var download = function (url, cb) {
 					art.pipe(fs.createWriteStream('./img/' + e.permalink + '.jpg'));
 				}else {
 					options = {
-							attachments: ['./img/def.jpg'],
-						};
+						attachments: ['./def.jpg'],
+					};
 					cc();
 				}
 			});
