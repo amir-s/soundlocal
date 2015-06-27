@@ -111,8 +111,9 @@
          		})
          		var atts = 0;
          		socket.on('attached', function (att) {
+         			console.log(att);
          			atts++;
-         			$("#item_" + m).find(".prog").css({'color': 'green'});
+         			$("#item_" + att).find(".prog").css({'color': 'green'});
          			$("#spin-text").html('Attaching ID3 Tags! ' + atts + "/"+N);
          		});
 

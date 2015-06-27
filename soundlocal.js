@@ -35,7 +35,6 @@ var getJson = function (url, cb) {
 }
 var cid = '2412b70da476791567d496f0f3c26b88';
 var goo = function (arc, arr, attached, cb, errcb) {
-	console.log("Here");
 	var files = [];
 	arr.forEachAsync(function (e, next) {
 		// console.log("writing for " + e.file);
@@ -50,7 +49,6 @@ var goo = function (arc, arr, attached, cb, errcb) {
 			next();
 		});
 	}, function () {
-		console.log("zipping");
 		var file = './public/' + arc + '.zip',
 			arguments = ['-j'],
 			fileList = files;
@@ -108,9 +106,7 @@ var download = function (url, lister, downloaded, startzip, stat, attached, cb, 
 					if (arr.length == N) {
 						startzip();
 						clearInterval(interval);
-						console.log("Waiting for Goo");
 						setTimeout(function () {
-							console.log("Running Goo");
 							goo(arc, arr, attached, cb, errcb);
 						}, 1000);
 					}
