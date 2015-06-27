@@ -35,15 +35,17 @@ var getJson = function (url, cb) {
 }
 var cid = '2412b70da476791567d496f0f3c26b88';
 var goo = function (arc, arr, cb, errcb) {
+	console.log("Here");
 	var files = [];
 	arr.forEachAsync(function (e, next) {
-		console.log(e.file);
+		console.log("writing for " + e.file);
 		ffmetadata.write(e.file, e.data, e.options, function(err) {
 			if (err) return errcb(err);
 			files.push(e.file);
 			next();
 		});
 	}, function () {
+		console.log("zipping");
 		var file = './public/' + arc + '.zip',
 			arguments = ['-j'],
 			fileList = files;

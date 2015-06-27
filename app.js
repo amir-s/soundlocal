@@ -64,7 +64,7 @@ io.on('connection', function (socket) {
 	
 	socket.on('url', function (url) {
 		downloader(url, function (list) {
-			console.log(list);
+			// console.log(list);
 			socket.emit('list', list);
 		}, function (name) {
 			socket.emit('downloaded', name);
