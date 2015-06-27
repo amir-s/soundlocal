@@ -67,6 +67,7 @@ var download = function (url, lister, downloaded, startzip, stat, cb, errcb) {
 		var arr = [];
 		if (err) return errcb(err);
 		var arc = data.title;
+		if (!data || !data.tracks) return errcb('tracks');
 		var N = data.tracks.length;
 		lister(data.tracks);
 		data.tracks.forEach(function (e) {
