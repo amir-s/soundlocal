@@ -24,15 +24,6 @@ app.get('/', function (req, res) {
 	res.render('index');
 });
 
-app.post('/', function (req, res) {
-	var url = req.body.url;
-	if (url.trim().length == 0) {
-		return res.redirect('/');
-	}
-	downloader(url, function (name) {
-		res.send("<a href='" + name + ".zip'>Download</a>");
-	})
-})
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
@@ -59,4 +50,31 @@ app.use(function(err, req, res, next) {
 });
 
 
-module.exports = app;
+
+
+
+var http = require('http');
+var port = process.env.PORT || '3000';
+
+var server = http.createServer(app);
+
+var io = require('socket.io')(server);
+
+io.on('connection', function (socket) {
+	
+	socket.on('url', function (url) {
+		downloader(url, function (list) {
+			console.log(list);
+			socket.emit('list', list);
+		}, function (name) {
+			socket.emit('downloaded', name);
+		}, function () {
+			socket.emit('startzip');
+		}, function (name) {
+			socket.emit('fin', name+'.zip');
+		})
+	});
+});
+
+server.listen(port);
+

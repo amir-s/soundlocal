@@ -59,7 +59,7 @@ var goo = function (arc, arr, cb) {
 		});
 	})
 }
-var download = function (url, cb) {
+var download = function (url, lister, downloaded, startzip, cb) {
 	var files = [];
 	var r = 'http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=' + cid;
 	getJson(r, function (err, data) {
@@ -67,13 +67,16 @@ var download = function (url, cb) {
 		if (err) throw err;
 		var arc = data.title;
 		var N = data.tracks.length;
+		lister(data.tracks);
 		data.tracks.forEach(function (e) {
 			var stream = request(e.stream_url+"?client_id=" + cid);
 			var f = './songs/'+e.permalink+'.mp3';
 			stream.on('end', function () {
+
 				var options = {};
 				var id3 = {};
 				var cc = function () {
+					downloaded(e.permalink);
 					var data = {
 						description: e.description,
 						title: e.title,
@@ -84,8 +87,8 @@ var download = function (url, cb) {
 						data: data,
 						options: options
 					});
-					console.log("Done with " + f + " " + arr.length + " " + N)
 					if (arr.length == N) {
+						startzip();
 						goo(arc, arr, cb);
 					}
 				}

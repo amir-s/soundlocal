@@ -1,12 +1,106 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>SoundLocal</title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-  	<form action="/" method="post">
-  		<input type="text" name="url" />
-  	</form>
-  </body>
+<!doctype html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="description" content="A layout example that shows off a responsive product landing page.">
+      <title>SoundLocal</title>
+	  <link href='http://fonts.googleapis.com/css?family=Jura:400,300' rel='stylesheet' type='text/css'>
+      <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+      <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+      <!--[if lte IE 8]>
+      <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/grids-responsive-old-ie-min.css">
+      <![endif]-->
+      <!--[if gt IE 8]><!-->
+      <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/grids-responsive-min.css">
+      <!--<![endif]-->
+      <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+      <!--[if lte IE 8]>
+      <link rel="stylesheet" href="css/layouts/marketing-old-ie.css">
+      <![endif]-->
+      <!--[if gt IE 8]><!-->
+      <link rel="stylesheet" href="css/layouts/marketing.css">
+
+      <!--<![endif]-->
+   </head>
+   <body>
+      <div class="header">
+         <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
+            <!-- <a class="pure-menu-heading" href="">SoundLocal</a> -->
+         </div>
+      </div>
+      <div class="splash-container">
+         <div class="splash" id="spl">
+            <h1 class="splash-head">SoundLocal</h1>
+            <p class="splash-subhead">
+               Enter the URL of SoundCload playlist!
+            </p>
+            <form class="pure-form">
+               <input type="text" name="url" id="url" /><br />
+               <a href="#" class="pure-button pure-button-primary" id="submit">Localify</a>
+            </form>
+			<table class="pure-table tbl">
+				<thead>
+				<tr>
+					<th width="1">#</th>
+					<th>Title</th>
+					<th width="25%">Status</th>
+				</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+         </div>
+      </div>
+     
+         <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+         <script src="/socket.io/socket.io.js"></script>
+		<script>
+		</script>
+         <script type="text/javascript">
+         $(function () {
+
+		  	var socket = io();
+         	$("#submit").click(function (e) {
+         		e.preventDefault();
+         		socket.emit('url', $("#url").val());
+ 				$("#spl").animate({'height': '100%'});
+ 				$("form").slideUp();
+ 				$(".splash-subhead").html('<i class="fa fa-spinner fa-pulse"></i> Please wait!');
+
+         		socket.on('list', function (data) {
+     				var ind = 0;
+     				$(".tbl").show();
+     				data.forEach(function (e) {
+     					var i = '<tr id="item_' + e.permalink + '">\
+     								<td>' + (++ind) + '</td>\
+     								<td>' + e.title + '</td>\
+     								<td class="status"><i class="fa fa-spinner fa-pulse"></i> Downloading</td>\
+     							</tr>';
+     					$(".tbl").find("tbody").append(i);
+     				});
+         		});
+
+         		socket.on('downloaded', function (d) {
+         			$("#item_"+d).find('.status').html('<i class="fa fa-check"></i> Downloaded!');
+         		});
+
+         		socket.on('startzip', function () {
+ 					$(".splash-subhead").slideUp(function () {
+ 						$(this).html('<i class="fa fa-spinner fa-pulse"></i> Attaching ID3 Tags and zipping!').slideDown();
+ 					});
+         		})
+
+         		socket.on('fin', function (data) {
+         			$(".splash-subhead").slideUp(function () {
+ 						$(this).html('<a href="'+data+'"><i class="fa fa-cloud-download"></i> Download!</a>').slideDown();
+ 					});	
+         		})
+
+         	})
+         })
+
+         </script>
+   </body>
 </html>
