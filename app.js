@@ -73,7 +73,6 @@ io.on('connection', function (socket) {
 		}, function (stat) {
 			socket.emit('stat', stat);
 		}, function (attached) {
-			console.log(attached);
 			socket.emit('attached', attached);
 		}, function (name) {
 			socket.emit('fin', name+'.zip');
