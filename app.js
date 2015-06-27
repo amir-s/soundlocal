@@ -70,8 +70,12 @@ io.on('connection', function (socket) {
 			socket.emit('downloaded', name);
 		}, function () {
 			socket.emit('startzip');
+		}, function (stat) {
+			socket.emit('stat', stat);
 		}, function (name) {
 			socket.emit('fin', name+'.zip');
+		}, function () {
+			socket.emit('err');
 		})
 	});
 });

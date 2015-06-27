@@ -34,13 +34,12 @@ var getJson = function (url, cb) {
 	});
 }
 var cid = '2412b70da476791567d496f0f3c26b88';
-var goo = function (arc, arr, cb) {
+var goo = function (arc, arr, cb, errcb) {
 	var files = [];
-	console.log("GOO");
 	arr.forEachAsync(function (e, next) {
 		console.log(e.file);
 		ffmetadata.write(e.file, e.data, e.options, function(err) {
-			if (err) throw err;
+			if (err) return errcb(err);
 			files.push(e.file);
 			next();
 		});
@@ -52,25 +51,35 @@ var goo = function (arc, arr, cb) {
 		var zip = new nodejszip();
 
 		zip.compress(file, fileList, arguments, function(err) {
-			if (err) {
-				throw err;
-			}
+			if (err) return errcb(err);
 			cb(arc);
 		});
 	})
 }
-var download = function (url, lister, downloaded, startzip, cb) {
+var download = function (url, lister, downloaded, startzip, stat, cb, errcb) {
 	var files = [];
+	var dlMap = {};
 	var r = 'http://api.soundcloud.com/resolve.json?url=' + url + '&client_id=' + cid;
+	var interval = setInterval(function () {
+		stat(dlMap);
+	}, 100);
 	getJson(r, function (err, data) {
 		var arr = [];
-		if (err) throw err;
+		if (err) return errcb(err);
 		var arc = data.title;
 		var N = data.tracks.length;
 		lister(data.tracks);
 		data.tracks.forEach(function (e) {
+			dlMap[e.permalink] = {total: 0, current: 0};
 			var stream = request(e.stream_url+"?client_id=" + cid);
 			var f = './songs/'+e.permalink+'.mp3';
+			stream.on('response', function (data) {
+				dlMap[e.permalink].total = ~~data.headers['content-length'];
+			});
+			stream.on('data', function (chunk) {
+				dlMap[e.permalink].current += chunk.length;
+			});
+
 			stream.on('end', function () {
 
 				var options = {};
@@ -89,7 +98,8 @@ var download = function (url, lister, downloaded, startzip, cb) {
 					});
 					if (arr.length == N) {
 						startzip();
-						goo(arc, arr, cb);
+						clearInterval(interval);
+						goo(arc, arr, cb, errcb);
 					}
 				}
 				if (e.artwork_url) {

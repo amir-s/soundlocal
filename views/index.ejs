@@ -76,14 +76,14 @@
      					var i = '<tr id="item_' + e.permalink + '">\
      								<td>' + (++ind) + '</td>\
      								<td>' + e.title + '</td>\
-     								<td class="status"><i class="fa fa-spinner fa-pulse"></i> Downloading</td>\
+     								<td class="status"><i class="fa fa-spinner fa-pulse"></i> Downloading<div class="prog"></div></td>\
      							</tr>';
      					$(".tbl").find("tbody").append(i);
      				});
          		});
 
          		socket.on('downloaded', function (d) {
-         			$("#item_"+d).find('.status').html('<i class="fa fa-check"></i> Downloaded!');
+         			$("#item_"+d).find('.status').html('<i class="fa fa-check"></i> Downloaded!<div class="prog" style="width: 119%;"></div></td>');
          		});
 
          		socket.on('startzip', function () {
@@ -94,8 +94,20 @@
 
          		socket.on('fin', function (data) {
          			$(".splash-subhead").slideUp(function () {
- 						$(this).html('<a href="'+data+'"><i class="fa fa-cloud-download"></i> Download!</a>').slideDown();
- 					});	
+ 						$(this).html('<a class="dl" href="'+data+'"><i class="fa fa-cloud-download"></i> Click to Download!</a>').slideDown();
+ 					});
+         		});
+
+         		socket.on('stat', function (mp) {
+         			for (var m in mp) {
+         				var perc = 0;
+         				if (mp[m].total != 0) perc = Math.round(mp[m].current/mp[m].total*119);
+         				$("#item_" + m).find(".prog").css({'width': perc+'%'});
+         			}
+         		})
+
+         		socket.on('err', function () {
+         			$(".splash-subhead").html("Something went wrong!!");
          		})
 
          	})
