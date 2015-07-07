@@ -69,10 +69,28 @@ var download = function (url, lister, downloaded, startzip, stat, attached, cb, 
 		stat(dlMap);
 	}, 100);
 	getJson(r, function (err, data) {
+		// console.log(JSON.stringify(data, null, 4));
 		var arr = [];
-		if (err) return errcb(err);
+		if (err) {
+			clearInterval(interval);
+			return errcb(err);
+		}
 		var arc = data.title;
-		if (!data || !data.tracks) return errcb('tracks');
+		if (!data || ["track", "playlist"].indexOf(data.kind) == -1) {
+			clearInterval(interval);
+			return errcb('tracks');
+		}
+		if (data.kind == "playlist" && data.tracks.length == 0) {
+			console.log("2");
+			clearInterval(interval);
+			return errcb('tracks');
+		}
+		if (data.kind == "track") {
+			data = {
+				tracks: [data],
+				title: arc
+			}
+		}
 		var N = data.tracks.length;
 		lister(data.tracks);
 		data.tracks.forEach(function (e) {
