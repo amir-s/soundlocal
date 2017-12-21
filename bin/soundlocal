@@ -1,0 +1,97 @@
+#!/usr/bin/env node
+
+const rp = require('request-promise');
+const request = require('request');
+const fs = require('fs');
+const ffmetadata = require('ffmetadata');
+const nodejszip = require('nodejs-zip');
+const path = require('path');
+const events = require('events');
+const EventEmitter = events.EventEmitter;
+
+const cid = '2412b70da476791567d496f0f3c26b88';
+
+const getJson = async function (url) {
+  let data = await rp.get(url);
+  return JSON.parse(data);
+};
+
+const attachID3 = function (ID3Data) {
+  return new Promise((acc, rej) => {
+    ffmetadata.write(ID3Data.file, ID3Data.data, ID3Data.options, function (err) {
+      if (err) return rej(err);
+      acc();
+    });
+  });
+}
+
+const download = async function (url) {
+  let files = [];
+  // var dlMap = {};
+  let data = await getJson(`http://api.soundcloud.com/resolve.json?url=${url}&client_id=${cid}`);
+  // console.log(JSON.stringify(data, null, 4));
+  let name = data.title;
+  if (!data || ["track", "playlist"].indexOf(data.kind) == -1) {
+    throw new Error('URL doesnt point to a track or playlist');
+  }
+  if (data.kind == "playlist" && data.tracks.length == 0) {
+    throw new Error('Playlist is empty');
+  }
+  if (data.kind == "track") {
+    data = {
+      tracks: [data],
+      title: name
+    }
+  }
+  console.log("Files:", data.tracks.length)
+  // console.log(data.tracks);
+  return await Promise.all(data.tracks.map(e => {
+    return new Promise((acc, rej) => {
+      const stream = request(`${e.stream_url}?client_id=${cid}`);
+      const fileName = path.resolve(`./${e.permalink}.mp3`);
+      console.log(fileName);
+      const options = {
+        attachments: []
+      };
+      // dlMap[e.permalink] = {total: 0, current: 0};
+      // stream.on('response', function (data) {
+      //   dlMap[e.permalink].total = ~~data.headers['content-length'];
+      // });
+      // stream.on('data', function (chunk) {
+      //   dlMap[e.permalink].current += chunk.length;
+      // });
+      const done = async function () {
+        // e.emit('downloaded', e.permalink);
+        await attachID3({
+          file: fileName,
+          data: {
+            description: e.description,
+            title: e.title,
+            genre: e.genre
+          },
+          options: options,
+          permalink: e.permalink
+        });
+        return fileName;
+      }
+      stream.on('end', () => {
+        if (!e.artwork_url) {
+          return done();
+        }
+        const artworkPath = path.resolve(`./${e.permalink}.jpg`);
+        const artworkStream = request(e.artwork_url);
+        artworkStream.on('end', () => {
+          options.attachments = [artworkPath];
+          setTimeout(function () {
+            done();
+          }, 1000)
+        });
+        artworkStream.pipe(fs.createWriteStream(artworkPath));
+      });
+      stream.pipe(fs.createWriteStream(fileName));
+    });
+  }));
+}
+
+download('https://soundcloud.com/farhahacha1/armand-amar-la-terre-vue-du-ciel').then(console.log).catch(console.log);
+
